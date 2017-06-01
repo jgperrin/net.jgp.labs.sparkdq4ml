@@ -25,7 +25,7 @@ public class DataQuality4MachineLearningApp {
 		spark.udf().register("priceCorrelationRule", new PriceCorrelationDataQualityUdf(), DataTypes.DoubleType);
 
 		// Load our dataset
-		String filename = "data/dataset.csv";
+		String filename = "data/dataset-small.csv";
 		Dataset<Row> df = spark.read().format("csv").option("inferSchema", "true").option("header", "false")
 				.load(filename);
 		
@@ -34,16 +34,15 @@ public class DataQuality4MachineLearningApp {
 		df = df.withColumn("price", df.col("_c1")).drop("_c1");
 		
 		// apply DQ rules
+		// 1) min price
 		df = df.withColumn("price_no_min", callUDF("minimumPriceRule", df.col("price")));
-		//df = df.selectExpr(exprs);
-		try {
-			df.createGlobalTempView("price");
-		} catch (AnalysisException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		df = spark.sql("SELECT * FROM global_temp.price WHERE price_no_min > 0");
-//		df = df.withColumn("price_correct_correl", callUDF("priceCorrelationRule", df.col("price_no_min")));
+		df.createOrReplaceTempView("price");
+		df = spark.sql("SELECT cast(guest as int) guest, price_no_min AS price FROM price WHERE price_no_min > 0");
+		df.printSchema();
+		// 2) correlated price
+		df = df.withColumn("price_correct_correl", callUDF("priceCorrelationRule", df.col("price"), df.col("guest")));
+		// df.createOrReplaceTempView("price");
+		// df = spark.sql("SELECT guest, price_correct_correl AS price FROM price WHERE price_correct_correl > 0");
 		
 		
 		df.show(50);

@@ -8,8 +8,8 @@ public class PriceCorrelationDataQualityUdf implements UDF2<Double, Integer, Dou
 
 	private static final long serialVersionUID = 4949954702581973224L;
 
-	public Double call(Double t1, Integer t2) throws Exception {
-		return PriceCorrelationDataQualityService.checkPriceRange(t1, t2);
+	public Double call(Double price, Integer guest) throws Exception {
+		return PriceCorrelationDataQualityService.checkPriceRange(price, guest);
 	}
 
 }
