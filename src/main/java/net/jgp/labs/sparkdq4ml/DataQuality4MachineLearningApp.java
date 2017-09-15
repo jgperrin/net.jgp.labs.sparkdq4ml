@@ -8,15 +8,14 @@ import org.apache.spark.ml.linalg.Vectors;
 import org.apache.spark.ml.regression.LinearRegression;
 import org.apache.spark.ml.regression.LinearRegressionModel;
 import org.apache.spark.ml.regression.LinearRegressionTrainingSummary;
-import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 
+import net.jgp.labs.sparkdq4ml.dq.udf.MinimumPriceDataQualityUdf;
 import net.jgp.labs.sparkdq4ml.dq.udf.PriceCorrelationDataQualityUdf;
 import net.jgp.labs.sparkdq4ml.ml.udf.VectorBuilder;
-import net.jgp.labs.sparkdq4ml.dq.udf.MinimumPriceDataQualityUdf;
 
 public class DataQuality4MachineLearningApp {
 
