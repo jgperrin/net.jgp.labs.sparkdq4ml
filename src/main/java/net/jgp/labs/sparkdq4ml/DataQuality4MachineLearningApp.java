@@ -91,21 +91,24 @@ public class DataQuality4MachineLearningApp {
 
     // Lots of complex ML code goes here
 
+    // Build the linear regression
     LinearRegression lr = new LinearRegression()
         .setMaxIter(40)
         .setRegParam(1)
         .setElasticNetParam(1);
 
-    // Fit the model to the data.
+    // Fit the model to the data
     LinearRegressionModel model = lr.fit(df);
 
     // Given a dataset, predict each point's label, and show the results.
     model.transform(df).show();
 
+    // Mostly debug and info-to-look-smart
     LinearRegressionTrainingSummary trainingSummary = model.summary();
-    System.out.println("numIterations: " + trainingSummary.totalIterations());
-    System.out.println("objectiveHistory: " + Vectors.dense(trainingSummary
-        .objectiveHistory()));
+    System.out.println("numIterations: " +
+        trainingSummary.totalIterations());
+    System.out.println("objectiveHistory: " +
+        Vectors.dense(trainingSummary.objectiveHistory()));
     trainingSummary.residuals().show();
     System.out.println("RMSE: " + trainingSummary.rootMeanSquaredError());
     System.out.println("r2: " + trainingSummary.r2());
@@ -116,11 +119,13 @@ public class DataQuality4MachineLearningApp {
     System.out.println("Regression parameter: " + regParam);
     double tol = model.getTol();
     System.out.println("Tol: " + tol);
+
+    // Prediction code
     Double feature = 40.0;
-    Vector features = Vectors.dense(feature);
+    Vector features = Vectors.dense(40.0);
     double p = model.predict(features);
 
+    // Catering business outcome for 40 guests
     System.out.println("Prediction for " + feature + " guests is " + p);
-    System.out.println(8 * regParam + intersect);
   }
 }
