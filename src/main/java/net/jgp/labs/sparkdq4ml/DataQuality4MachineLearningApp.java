@@ -2,8 +2,8 @@ package net.jgp.labs.sparkdq4ml;
 
 import static org.apache.spark.sql.functions.callUDF;
 
+import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.linalg.Vector;
-import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.ml.linalg.Vectors;
 import org.apache.spark.ml.regression.LinearRegression;
 import org.apache.spark.ml.regression.LinearRegressionModel;
@@ -15,8 +15,14 @@ import org.apache.spark.sql.types.DataTypes;
 
 import net.jgp.labs.sparkdq4ml.dq.udf.MinimumPriceDataQualityUdf;
 import net.jgp.labs.sparkdq4ml.dq.udf.PriceCorrelationDataQualityUdf;
-import net.jgp.labs.sparkdq4ml.ml.udf.VectorBuilder;
 
+/**
+ * Cleans a dataset and then extrapolates date through machine learning, via
+ * a linear regression using Apache Spark.
+ * 
+ * @author jgp
+ *
+ */
 public class DataQuality4MachineLearningApp {
 
   public static void main(String[] args) {
@@ -25,9 +31,14 @@ public class DataQuality4MachineLearningApp {
     app.start();
   }
 
+  /**
+   * Real work goes here...
+   */
   private void start() {
-    SparkSession spark = SparkSession.builder().appName("DQ4ML")
-        .master("local").getOrCreate();
+    SparkSession spark = SparkSession.builder()
+        .appName("DQ4ML")
+        .master("local[*]")
+        .getOrCreate();
 
     // DQ Section
     // ----------
@@ -44,8 +55,8 @@ public class DataQuality4MachineLearningApp {
         .load(filename);
 
     // simple renaming of the columns
-    df = df.withColumn("guest", df.col("_c0")).drop("_c0");
-    df = df.withColumn("price", df.col("_c1")).drop("_c1");
+    df = df.withColumnRenamed("_c0", "guest");
+    df = df.withColumnRenamed("_c1", "price");
 
     System.out.println("----");
     System.out.println("Load & Format");
@@ -86,20 +97,30 @@ public class DataQuality4MachineLearningApp {
     // ML Section
     // ----------
 
-    spark.udf().register("vectorBuilder", new VectorBuilder(),
-        new VectorUDT());
-
+    // Creates the "label" column, required by the LR algorithm.
     df = df.withColumn("label", df.col("price"));
-    df = df.withColumn("features",
-        callUDF("vectorBuilder", df.col("guest")));
+
+    // Puts all the columns that will be part of the feature in an array, so
+    // you can assemble them later. Here we have only one column in our
+    // feature.
+    String[] inputCols = new String[1];
+    inputCols[0] = "guest";
+
+    // Assembles the features in one column called "features".
+    VectorAssembler assembler = new VectorAssembler()
+        .setInputCols(inputCols)
+        .setOutputCol("features");
+    df = assembler.transform(df);
     df.printSchema();
     df.show();
 
-    // Lots of complex ML code goes here
+    // Lots of complex ML code goes here (just kidding...)
 
     // Build the linear regression
-    LinearRegression lr = new LinearRegression().setMaxIter(40)
-        .setRegParam(1).setElasticNetParam(1);
+    LinearRegression lr = new LinearRegression()
+        .setMaxIter(40)
+        .setRegParam(1)
+        .setElasticNetParam(1);
 
     // Fit the model to the data
     LinearRegressionModel model = lr.fit(df);
